@@ -124,10 +124,11 @@ namespace Knight_Offline
                     // Character selected 
                     if (Response.Code == 0x01)
                     {
-                        Game.CurrentZoneID = (byte)Response.CurrentZoneID;
-                        Game.CurrentPositionX = (ushort)Response.CurrentPositionX;
-                        Game.CurrentPositionZ = (ushort)Response.CurrentPositionZ;
-                        Game.CurrentPositionY = (ushort)Response.CurrentPositionY;
+                        // We will fetch this informations also from the WIZ_MYINFO packet, I presume that this data is needed to load the terrain and objects while loading the game
+                        Game.MyCharacter.CurrentZoneID = (byte)Response.CurrentZoneID;
+                        Game.MyCharacter.CurrentPositionX = (float)Response.CurrentPositionX;
+                        Game.MyCharacter.CurrentPositionZ = (float)Response.CurrentPositionZ;
+                        Game.MyCharacter.CurrentPositionY = (float)Response.CurrentPositionY;
                         Game.VictoryNation = (byte)Response.VictoryNation;
                         Game.AuthHash = (byte[])Response.AuthHash;
 
@@ -154,6 +155,7 @@ namespace Knight_Offline
                 case Packet.OpCodes.WIZ_VERSION_CHECK:
                     if (GlobalConfiguration.TargetVersion == (ushort)Response.ServerVersion)
                     {
+                        Game.PseudoAuthID = (byte)Response.PseudoAuthID;
                         SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_LOGIN).AddString("testing6").AddString("testing6").Build());
                     }
                     else
@@ -222,9 +224,141 @@ namespace Knight_Offline
                     }
                     break;
 
+                case Packet.OpCodes.WIZ_MYINFO:
+                    Game.SocketID = (ushort)Response.SocketID;
+                    // Character section
+                    Game.MyCharacter.CharacterID = (string)Response.CharacterID;
+                    Game.MyCharacter.CurrentPositionX = (float)Response.CurrentPositionX;
+                    Game.MyCharacter.CurrentPositionZ = (float)Response.CurrentPositionZ;
+                    Game.MyCharacter.CurrentPositionY = (float)Response.CurrentPositionY;
+                    Game.MyCharacter.Nation = (Player.Nation)Response.Nation;
+                    Game.MyCharacter.Race = (Player.Race)Response.Race;
+                    Game.MyCharacter.Class = (Player.Class)Response.Class;
+                    Game.MyCharacter.Face = (byte)Response.Face;
+                    Game.MyCharacter.Hair = (byte)Response.Hair;
+                    Game.MyCharacter.IsKing = (bool)Response.IsKing;
+                    Game.MyCharacter.Title = (byte)Response.Title;
+                    Game.MyCharacter.Level = (byte)Response.Level;
+                    Game.MyCharacter.ExperiencePoints = (uint)Response.ExperiencePoints;
+                    Game.MyCharacter.RequiredExperiencePointsToLevelUp = (uint)Response.RequiredExperiencePointsToLevelUp;
+                    Game.MyCharacter.NationalPoints = (uint)Response.NationalPoints;
+                    Game.MyCharacter.MonthlyNationalPoints = (uint)Response.MonthlyNationalPoints;
+                    Game.MyCharacter.City = (byte)Response.City;
+                    // Clan section
+                    Game.MyCharacter.Clan.AllianceID = (ushort)Response.AllianceID;
+                    Game.MyCharacter.Clan.AllianceFlag = (byte)Response.AllianceFlag;
+                    Game.MyCharacter.Clan.ClanID = (ushort)Response.ClanID;
+                    Game.MyCharacter.Clan.ClanDuty = (byte)Response.ClanDuty;
+                    Game.MyCharacter.Clan.ClanName = (string)Response.ClanName;
+                    Game.MyCharacter.Clan.ClanGrade = (byte)Response.ClanGrade;
+                    Game.MyCharacter.Clan.ClanRank = (byte)Response.ClanRank;
+                    Game.MyCharacter.Clan.ClanMarkVersion = (ushort)Response.ClanMarkVersion;
+                    Game.MyCharacter.Clan.ClanCapeID = (ushort)Response.ClanCapeID;
+                    // Character statistics
+                    Game.MyCharacter.HP = (ushort)Response.HP;
+                    Game.MyCharacter.MaxHP = (ushort)Response.MaxHP;
+                    Game.MyCharacter.MSP = (ushort)Response.MSP;
+                    Game.MyCharacter.MaxMSP = (ushort)Response.MaxMSP;
+                    Game.MyCharacter.Attack = (ushort)Response.Attack;
+                    Game.MyCharacter.Defense = (ushort)Response.Defense;
+                    //  Statistics points
+                    Game.MyCharacter.StatisticsPoints.FreePoints = (byte)Response.RemainingStatisticsPoints;
+                    Game.MyCharacter.StatisticsPoints.STR.Base = (byte)Response.StatisticsPoints.STR.Base;
+                    Game.MyCharacter.StatisticsPoints.STR.Delta = (byte)Response.StatisticsPoints.STR.Delta;
+                    Game.MyCharacter.StatisticsPoints.HP.Base = (byte)Response.StatisticsPoints.HP.Base;
+                    Game.MyCharacter.StatisticsPoints.HP.Delta = (byte)Response.StatisticsPoints.HP.Delta;
+                    Game.MyCharacter.StatisticsPoints.DEX.Base = (byte)Response.StatisticsPoints.DEX.Base;
+                    Game.MyCharacter.StatisticsPoints.DEX.Delta = (byte)Response.StatisticsPoints.DEX.Delta;
+                    Game.MyCharacter.StatisticsPoints.INT.Base = (byte)Response.StatisticsPoints.INT.Base;
+                    Game.MyCharacter.StatisticsPoints.INT.Delta = (byte)Response.StatisticsPoints.INT.Delta;
+                    Game.MyCharacter.StatisticsPoints.MP.Base = (byte)Response.StatisticsPoints.MP.Base;
+                    Game.MyCharacter.StatisticsPoints.MP.Delta = (byte)Response.StatisticsPoints.MP.Delta;
+                    // Resistances
+                    Game.MyCharacter.Resistances.FireResistance = (byte)Response.Resistances.FireResistance;
+                    Game.MyCharacter.Resistances.GlacierResistance = (byte)Response.Resistances.GlacierResistance;
+                    Game.MyCharacter.Resistances.LightningResistance = (byte)Response.Resistances.LightningResistance;
+                    Game.MyCharacter.Resistances.MagicResistance = (byte)Response.Resistances.MagicResistance;
+                    Game.MyCharacter.Resistances.CourseResistance = (byte)Response.Resistances.CourseResistance;
+                    Game.MyCharacter.Resistances.PoisonResistance = (byte)Response.Resistances.PoisonResistance;
+                    // Skills
+                    Game.MyCharacter.Skills.FreePoints = (byte)Response.SkillPoints.FreePoints;
+                    Game.MyCharacter.Skills.Leadership = (byte)Response.SkillPoints.Leadership;
+                    Game.MyCharacter.Skills.Politics = (byte)Response.SkillPoints.Politics;
+                    Game.MyCharacter.Skills.Language = (byte)Response.SkillPoints.Language;
+                    Game.MyCharacter.Skills.SiegeWeapons = (byte)Response.SkillPoints.SiegeWeapons;
+                    Game.MyCharacter.Skills.Tree1 = (byte)Response.SkillPoints.Tree1;
+                    Game.MyCharacter.Skills.Tree2 = (byte)Response.SkillPoints.Tree2;
+                    Game.MyCharacter.Skills.Tree3 = (byte)Response.SkillPoints.Tree3;
+                    Game.MyCharacter.Skills.Master = (byte)Response.SkillPoints.Master;
+                    // Inventory
+                    Game.MyCharacter.Inventory.Gold = (uint)Response.Gold;
+                    Game.MyCharacter.Inventory.Weight = (float)Response.Weight;
+                    Game.MyCharacter.Inventory.MaxWeight = (float)Response.MaxWeight;
+
+                    // Equipped items
+                    for (byte h = 0; h < Defines.EquippedItemSlots; ++h)
+                    {
+                        Game.MyCharacter.Inventory.EquippedItems[h] = new Item
+                        {
+                            ID = (uint)Response.EquippedItemList[h].ID,
+                            Durability = (ushort)Response.EquippedItemList[h].Durability,
+                            Amount = (ushort)Response.EquippedItemList[h].Count,
+                            RentalFlag = (byte)Response.EquippedItemList[h].RentalFlag,
+                            RemainingRentalTime = (ushort)Response.EquippedItemList[h].RemainingRentalTime,
+                        };
+                    }
+
+                    // Inventory items
+                    for (byte h = 0; h < Defines.InventoryItemSlots; ++h)
+                    {
+                        Game.MyCharacter.Inventory.InventoryItems[h] = new Item
+                        {
+                            ID = (uint)Response.InventoryItemList[h].ID,
+                            Durability = (ushort)Response.InventoryItemList[h].Durability,
+                            Amount = (ushort)Response.InventoryItemList[h].Count,
+                            RentalFlag = (byte)Response.InventoryItemList[h].RentalFlag,
+                            RemainingRentalTime = (ushort)Response.InventoryItemList[h].RemainingRentalTime,
+                        };
+                    }
+
+                    // Premium issues
+                    Game.Premium.AccountStatus = (byte)Response.AccountStatus;
+                    Game.Premium.PremiumType = (byte)Response.PremiumType;
+                    Game.Premium.PremiumTime = (ushort)Response.PremiumTime;
+                    // Rest
+                    Game.MyCharacter.Authority = (byte)Response.Authority;
+                    Game.MyCharacter.Rank = (byte)Response.Rank;
+                    Game.MyCharacter.PersonalRank = (byte)Response.PersonalRank;
+                    Game.MyCharacter.IsChicken = (bool)Response.IsChicken;
+                    Game.MyCharacter.MannerPoints = (uint)Response.MannerPoints;
+                    break;
+
+                case Packet.OpCodes.WIZ_TIME:
+                    Game.ServerDateTime = new DateTime(Response.Year, Response.Month, Response.Day, Response.Hour, Response.Minute, 0);
+                    break;
+
+                // case Packet.OpCodes.WIZ_WEATHER:
+                //     Game.Zone.Weather.Type = (Weather.WeatherTypes)Response.Weather;
+                //     Game.Zone.Weather.Percentage = (ushort)Response.WeatherAmount;
+                //     break;
+
                 case Packet.OpCodes.WIZ_FRIEND_PROCESS:
                     SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SKILLDATA).AddByte(0x02).Build()); // ???
                     SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_GAMESTART).AddByte(0x02).AddString("Rob").Build()); // ??? -> WE CAN PUT HERE ANYTHING... server doesnt care about Character ID
+                    break;
+
+                case Packet.OpCodes.WIZ_ZONEABILITY:                    
+                    Game.Zone.CanTradeWithOtherNation = (bool)Response.CanTradeWithOtherNation;
+                    Game.Zone.ZoneType = (byte)Response.ZoneType;
+                    Game.Zone.CanTalkToOtherNation = (bool)Response.CanTalkToOtherNation;
+                    Game.Zone.Tax = (ushort)Response.Tariff;
+                    break;
+
+                case Packet.OpCodes.WIZ_SERVER_INDEX:
+                    if (Response.Code == 0x01)
+                    {
+                        Game.ServerNo = (ushort)Response.ServerNo;
+                    }
                     break;
 
                 default:

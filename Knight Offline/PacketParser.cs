@@ -143,9 +143,9 @@ namespace Knight_Offline
                     case Packet.OpCodes.WIZ_SEL_CHAR:
                         ParsedPacket.Code = ReceivedPacket[10];
                         ParsedPacket.CurrentZoneID = ReceivedPacket[11];
-                        ParsedPacket.CurrentPositionX = BitConverter.ToInt16(ReceivedPacket, 12) * 10;
-                        ParsedPacket.CurrentPositionZ = BitConverter.ToInt16(ReceivedPacket, 14) * 10;
-                        ParsedPacket.CurrentPositionY = BitConverter.ToInt16(ReceivedPacket, 16) * 10;
+                        ParsedPacket.CurrentPositionX = BitConverter.ToInt16(ReceivedPacket, 12) / 10.0f;
+                        ParsedPacket.CurrentPositionZ = BitConverter.ToInt16(ReceivedPacket, 14) / 10.0f;
+                        ParsedPacket.CurrentPositionY = BitConverter.ToInt16(ReceivedPacket, 16) / 10.0f;
                         ParsedPacket.VictoryNation = ReceivedPacket[18];
                         ParsedPacket.AuthHash = ReceivedPacket.Skip(20).Take(ReceivedPacket[19]).ToArray();
                         // ParsedPacket.AuthHash = Encoding.ASCII.GetString(ReceivedPacket.Skip(20).Take(ReceivedPacket[19]).ToArray());                        
@@ -242,7 +242,7 @@ namespace Knight_Offline
                             ParsedPacket.Class = BitConverter.ToUInt16(ReceivedPacket, Offset + 8); // As I said before it should be a byte
                             ParsedPacket.Face = ReceivedPacket[Offset + 10];
                             ParsedPacket.Hair = ReceivedPacket[Offset + 11];
-                            ParsedPacket.IsKing = ReceivedPacket[Offset + 12];
+                            ParsedPacket.IsKing = Convert.ToBoolean(ReceivedPacket[Offset + 12]);
                             ParsedPacket.Title = ReceivedPacket[Offset + 13];
                             ParsedPacket.Level = ReceivedPacket[Offset + 14];
                             ParsedPacket.RemainingStatisticsPoints = ReceivedPacket[Offset + 15]; // May also be called FreeStatisticsPoints
@@ -256,7 +256,7 @@ namespace Knight_Offline
                             ParsedPacket.AllianceID = BitConverter.ToUInt16(ReceivedPacket, Offset + 36);
                             ParsedPacket.AllianceFlag = ReceivedPacket[Offset + 38];
                             byte ClanNameLength = ReceivedPacket[Offset + 39];
-                            ParsedPacket.ClanName = Encoding.ASCII.GetString(ReceivedPacket.Skip(Offset + 40).Take(ClanNameLength).ToArray()); // what if null
+                            ParsedPacket.ClanName = Encoding.ASCII.GetString(ReceivedPacket.Skip(Offset + 40).Take(ClanNameLength).ToArray());
                             Offset += (ushort)(ClanNameLength + 40);
                             ParsedPacket.ClanGrade = ReceivedPacket[Offset];
                             ParsedPacket.ClanRank = ReceivedPacket[Offset + 1];
@@ -358,7 +358,7 @@ namespace Knight_Offline
                             ParsedPacket.AccountStatus = ReceivedPacket[Offset]; // Most likely but needs verification
                             ParsedPacket.PremiumType = ReceivedPacket[Offset + 1];
                             ParsedPacket.PremiumTime = BitConverter.ToUInt16(ReceivedPacket, Offset + 2); // Premium time counted in days
-                            ParsedPacket.IsChicken = ReceivedPacket[Offset + 4];
+                            ParsedPacket.IsChicken = Convert.ToBoolean(ReceivedPacket[Offset + 4]);
                             ParsedPacket.MannerPoints = BitConverter.ToUInt32(ReceivedPacket, Offset + 5);
                         }
                         break;
@@ -398,9 +398,9 @@ namespace Knight_Offline
                         // If request was successful, the server returns 0x01
                         if (ParsedPacket.Code == 0x01)
                         {
-                            ParsedPacket.CanTradeWithOtherNation = ReceivedPacket[11];
+                            ParsedPacket.CanTradeWithOtherNation = Convert.ToBoolean(ReceivedPacket[11]);
                             ParsedPacket.ZoneType = ReceivedPacket[12];
-                            ParsedPacket.CanTalkToOtherNation = ReceivedPacket[13];
+                            ParsedPacket.CanTalkToOtherNation = Convert.ToBoolean(ReceivedPacket[13]);
                             ParsedPacket.Tariff = BitConverter.ToUInt16(ReceivedPacket, 14); // Zone tax
                         }
                         break;

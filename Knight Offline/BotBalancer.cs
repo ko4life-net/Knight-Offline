@@ -482,7 +482,7 @@ namespace Knight_Offline
             Attacker,
             Tank, // For old provoke style e.g. Harpy party
             BattlePriest,
-            // FullPlacePriest // I'm not sure if it was that popular
+            // FullPlatePriest // I'm not sure if it was that popular
             ChitinPriest,
             ShellPriest,
             Archer,
