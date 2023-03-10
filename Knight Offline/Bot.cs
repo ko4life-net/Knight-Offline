@@ -22,6 +22,7 @@ namespace Knight_Offline
         private AsynchronousTCPClient Client;
         private Game Game = new Game();
         private Time Time = new Time();
+        private ClientStates ClientState = ClientStates.Initiation;
 
         public Bot(GlobalConfiguration GlobalConfiguration, BotConfiguration BotConfiguration)
         {
@@ -35,6 +36,7 @@ namespace Knight_Offline
         {
             Client.Connect(ServerIP, Port);
             // Let's start the fun, hemorrhage gaming
+            ClientState = ClientStates.EncryptionHandshake;
             Client.Send(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_VERSION_CHECK).Build());
 
             while (true)
@@ -80,12 +82,15 @@ namespace Knight_Offline
                     // Select nation
                     if ((byte)Response.Nation == 0)
                     {
+                        ClientState = ClientStates.NationSelectScreen;
                         SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SEL_NATION).AddByte((byte)BotConfiguration.BotTemplate.Nation).Build());
                         SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_ALLCHAR_INFO_REQ).Build());
                     }
                     // Verification of selected nation
                     else if(Enum.IsDefined(typeof(Player.Nation), (byte)Response.Nation))
                     {
+                        ClientState = ClientStates.CharacterSelectScreen;
+
                         if ((byte)Response.Nation == (byte)BotConfiguration.BotTemplate.Nation)
                         {
                             SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_ALLCHAR_INFO_REQ).Build());
@@ -124,6 +129,7 @@ namespace Knight_Offline
                     // Character selected 
                     if (Response.Code == 0x01)
                     {
+                        ClientState = ClientStates.LoadingGame;
                         // We will fetch this informations also from the WIZ_MYINFO packet, I presume that this data is needed to load the terrain and objects while loading the game
                         Game.MyCharacter.CurrentZoneID = (byte)Response.CurrentZoneID;
                         Game.MyCharacter.CurrentPositionX = (float)Response.CurrentPositionX;
@@ -155,6 +161,7 @@ namespace Knight_Offline
                 case Packet.OpCodes.WIZ_VERSION_CHECK:
                     if (GlobalConfiguration.TargetVersion == (ushort)Response.ServerVersion)
                     {
+                        ClientState = ClientStates.Authorization;
                         Game.PseudoAuthID = (byte)Response.PseudoAuthID;
                         SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_LOGIN).AddString("testing6").AddString("testing6").Build());
                     }
@@ -343,6 +350,7 @@ namespace Knight_Offline
                 //     break;
 
                 case Packet.OpCodes.WIZ_FRIEND_PROCESS:
+                    ClientState = ClientStates.InGame;
                     SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SKILLDATA).AddByte(0x02).Build()); // ???
                     SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_GAMESTART).AddByte(0x02).AddString("Rob").Build()); // ??? -> WE CAN PUT HERE ANYTHING... server doesnt care about Character ID
                     break;
@@ -390,9 +398,10 @@ namespace Knight_Offline
             SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SPEEDHACK_CHECK).AddByte(Convert.ToByte(!IsInitialized)).AddFloat(Time.GetTotalElapsedTime()).Build());
         }
 
-        public enum ClientState : byte
+        public enum ClientStates : byte
         {
-            EncryptionHandshake = 1,
+            Initiation,
+            EncryptionHandshake,
             Authorization,
             NationSelectScreen,
             CharacterSelectScreen,
