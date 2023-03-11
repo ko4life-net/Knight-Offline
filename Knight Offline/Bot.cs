@@ -144,7 +144,7 @@ namespace Knight_Offline
                         // Send WIZ_SPEEDHACK_CHECK packet with initialization flag
                         SendSpeedhackCheckPacket(false);
                         SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SERVER_INDEX).Build());
-                        SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_GAMESTART).AddByte(0x01).AddString("testing6").Build());
+                        SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_GAMESTART).AddByte(0x01).AddString(BotConfiguration.AccountID).Build());
                     }
                     else
                     {
@@ -163,7 +163,7 @@ namespace Knight_Offline
                     {
                         ClientState = ClientStates.Authorization;
                         Game.PseudoAuthID = (byte)Response.PseudoAuthID;
-                        SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_LOGIN).AddString("testing6").AddString("testing6").Build());
+                        SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_LOGIN).AddString(BotConfiguration.AccountID).AddString(BotConfiguration.Password).Build());
                     }
                     else
                     {
@@ -223,7 +223,7 @@ namespace Knight_Offline
                         // Select character
                         else
                         {                                
-                            SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SEL_CHAR).AddString("testing6").AddString(Response.CharacterList[(byte)CharacterSlot].CharacterID).AddByte(0x01)
+                            SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SEL_CHAR).AddString(BotConfiguration.AccountID).AddString(Response.CharacterList[(byte)CharacterSlot].CharacterID).AddByte(0x01)
                                 .AddByte(Response.CharacterList[(byte)CharacterSlot].ZoneID).Build());
                             Debug.WriteLine("Select character");
                             // Call WinAPI form here!
@@ -352,7 +352,7 @@ namespace Knight_Offline
                 case Packet.OpCodes.WIZ_FRIEND_PROCESS:
                     ClientState = ClientStates.InGame;
                     SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SKILLDATA).AddByte(0x02).Build()); // ???
-                    SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_GAMESTART).AddByte(0x02).AddString("Rob").Build()); // ??? -> WE CAN PUT HERE ANYTHING... server doesnt care about Character ID
+                    SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_GAMESTART).AddByte(0x02).AddString(BotConfiguration.AccountID).Build()); // ??? -> WE CAN PUT HERE ANYTHING... server doesnt care about Character ID
                     break;
 
                 case Packet.OpCodes.WIZ_ZONEABILITY:                    
