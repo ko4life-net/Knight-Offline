@@ -10,9 +10,9 @@ namespace Knight_Offline
 
     public class Time
     {
-        private static bool IsStopwatchMethod;
-        private static long Frequency, StartingTime, CurrentTime, PreviousTime;
-        public static Dictionary<string, Interval> Intervals; // = new Dictionary<string, Interval>();
+        static private bool IsStopwatchMethod;
+        static private long Frequency, StartingTime, CurrentTime, PreviousTime;
+        public Dictionary<string, Interval> Intervals; // = new Dictionary<string, Interval>();
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool QueryPerformanceFrequency(out long Frequency);
@@ -92,7 +92,11 @@ namespace Knight_Offline
             if (Intervals.Count > 0)
             {
                 float ElapsedTime = GetElapsedTime();
-                Intervals.ToDictionary(x => x.Value.IntervalTime += ElapsedTime);
+
+                foreach(var Interval in Intervals.Values)
+                {
+                    Interval.IntervalTime += ElapsedTime;
+                }
             }
         }
 
@@ -112,6 +116,11 @@ namespace Knight_Offline
     public class Interval : Time
     {
         public float IntervalTime;
+
+        public Interval() : base()
+        {
+
+        }
 
         public bool IsTimeElapsed(float Condition)
         {

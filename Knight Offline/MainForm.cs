@@ -153,12 +153,10 @@ namespace Knight_Offline
         }
 
         private void SendCommandClick(object sender, EventArgs e)
-        {
-            /*
-            ServiceCommand(Command.Text.Trim());
+        {            
+            ServiceCommand(Command.Text);
             Command.Text = "";
             ActiveControl = Command;
-            */
         }
 
         // Not fixed yet
@@ -178,12 +176,32 @@ namespace Knight_Offline
 
         private void ServiceCommand(string Command)
         {
-            // Not implemented yet
+            Command = Command.Trim();
+
+            if (Command.Length > 0)
+            {
+                if (Command.Substring(0, 1) == "/")
+                {
+                    Command = Command.TrimStart('/');
+                }
+
+                string[] SplitCommand = Command.Split(' ');
+                SplitCommand[0] = SplitCommand[0].ToLower();
+
+                switch(SplitCommand[0])
+                {
+                    case "test":
+                        TestingEnvironment();
+                        break;
+                    
+                }
+            }
         }
 
         private void TestingEnvironment()
         {
             // High quality gameplay here
+            // Bots[0].Bot.test();
         }
 
         private bool IsIPv4Valid(string IPAddress)

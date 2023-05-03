@@ -403,6 +403,8 @@ namespace Knight_Offline
                             ParsedPacket.CanTalkToOtherNation = Convert.ToBoolean(ReceivedPacket[13]);
                             ParsedPacket.Tariff = BitConverter.ToUInt16(ReceivedPacket, 14); // Zone tax
                         }
+
+                        // Getting/receive 5E 02 02 00 packet means getting AC buff
                         break;
 
                     case Packet.OpCodes.WIZ_SERVER_INDEX:
@@ -471,6 +473,7 @@ namespace Knight_Offline
             WIZ_DEL_CHAR          = 0x03, // Delete character
             WIZ_SEL_CHAR          = 0x04, // Select character
             WIZ_SEL_NATION        = 0x05, // Select nation
+            WIZ_MOVE              = 0x06, // Move character
             WIZ_ALLCHAR_INFO_REQ  = 0x0C, // Request account informations about all characters
             WIZ_GAMESTART         = 0x0D, // Starting the game, which consequently gives a lot of informations
             WIZ_MYINFO            = 0x0E, // Packet about your character

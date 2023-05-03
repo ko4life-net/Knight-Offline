@@ -23,6 +23,9 @@ namespace Knight_Offline
         private Game Game = new Game();
         private Time Time = new Time();
         private ClientStates ClientState = ClientStates.Initiation;
+        private BotModes BotMode = BotModes.Automatic;
+        private Random RNG = new Random(Guid.NewGuid().GetHashCode());
+        private ConcurrentQueue<Actions> Actions = new ConcurrentQueue<Actions>();
 
         public Bot(GlobalConfiguration GlobalConfiguration, BotConfiguration BotConfiguration)
         {
@@ -59,6 +62,7 @@ namespace Knight_Offline
                 }
 
                 // Pending calculations and actions?
+                Tick();
                 HandleCyclicalPackets();
 
                 if (!SendPacketsQueue.IsEmpty)
@@ -69,7 +73,7 @@ namespace Knight_Offline
                     }
                 }
 
-                await Task.Delay(2000); // This is only an indicative value that will be changed in the future
+                await Task.Delay(500); // This is only an indicative value that will be changed in the future
             }
         }
 
@@ -353,9 +357,10 @@ namespace Knight_Offline
                     ClientState = ClientStates.InGame;
                     SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SKILLDATA).AddByte(0x02).Build()); // ???
                     SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_GAMESTART).AddByte(0x02).AddString(BotConfiguration.AccountID).Build()); // ??? -> WE CAN PUT HERE ANYTHING... server doesnt care about Character ID
+                    SendMovePacket(Game.MyCharacter.CurrentPositionX, Game.MyCharacter.CurrentPositionZ, 0, 0);
                     break;
 
-                case Packet.OpCodes.WIZ_ZONEABILITY:                    
+                case Packet.OpCodes.WIZ_ZONEABILITY:     
                     Game.Zone.CanTradeWithOtherNation = (bool)Response.CanTradeWithOtherNation;
                     Game.Zone.ZoneType = (byte)Response.ZoneType;
                     Game.Zone.CanTalkToOtherNation = (bool)Response.CanTalkToOtherNation;
@@ -380,6 +385,28 @@ namespace Knight_Offline
             // Time.Intervals.Add("WIZ_TIMENOTIFY", new Interval());
             // Time.Intervals.Add("WIZ_DATASAVE", new Interval());
             Time.Intervals.Add("WIZ_SPEEDHACK_CHECK", new Interval());
+            // Other
+            // Time.Intervals.Add("MovementProcess", new Interval());
+            Time.Intervals.Add("ActionProcess", new Interval());
+        }
+
+        private void Tick()
+        {
+            if (ClientState == ClientStates.InGame && BotMode == BotModes.Automatic)
+            {
+                lock (Actions)
+                {
+                    if (Actions.Count == 0)
+                    {
+                        if (Game.MyCharacter.IsChicken == false && Game.MyCharacter.Level < 21)
+                        {
+                            SimulateBreak(2, 10);
+                            Move(360, 425);
+                            SimulateBreak(2, 5);
+                        }
+                    }
+                }
+            }
         }
 
         private void HandleCyclicalPackets()
@@ -390,12 +417,81 @@ namespace Knight_Offline
                 {
                     SendSpeedhackCheckPacket();
                 }
+
+                // Planned actions
+                if (Actions.TryPeek(out Actions Action) && Time.Intervals["ActionProcess"].IsTimeElapsed(Action.IntervalTime))
+                {
+                    // Planned movement
+                    if (Action is Move)
+                    {
+                        Move Move = Action as Move;
+                        SendMovePacket(Move.X, Move.Z, 45, 3);
+                    }
+
+                    Actions.TryDequeue(out Action);
+                }
             }
         }
 
         private void SendSpeedhackCheckPacket(bool IsInitialized = true)
         {
             SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_SPEEDHACK_CHECK).AddByte(Convert.ToByte(!IsInitialized)).AddFloat(Time.GetTotalElapsedTime()).Build());
+        }
+
+        private void SendMovePacket(float WillX, float WillZ, ushort Speed, byte Flag)
+        {
+            SendPacketsQueue.Enqueue(PacketParser.Packet.OpCode(Packet.OpCodes.WIZ_MOVE).AddShort((ushort)(WillX * 10)).AddShort((ushort)(WillZ * 10)).AddShort(0).AddShort(Speed).AddByte(Flag).Build());
+        }
+
+        private void SimulateBreak(int MinBreak, int MaxBreak)
+        {
+            Actions.Enqueue(new AFK()
+            {
+                IntervalTime = RNG.Next(MinBreak * 10, MaxBreak * 10) / 10.0f
+            });
+        }
+
+        public void Move(float TargetX, float TargetZ)
+        {
+            // It's just an early prototype
+            float PositionX = Game.MyCharacter.CurrentPositionX;
+            float PositionZ = Game.MyCharacter.CurrentPositionZ;
+            float DeltaX = Math.Abs(PositionX - TargetX);
+            float DeltaZ = Math.Abs(PositionZ - TargetZ);
+            float Distance = (float)Math.Sqrt(Math.Pow(DeltaX, 2) + (float)Math.Pow(DeltaZ, 2));
+            ushort NumberOfMovementPackets = (ushort)(Distance / 6.75f);
+            float DistanceX = DeltaX / NumberOfMovementPackets;
+            float DistanceZ = DeltaZ / NumberOfMovementPackets;
+            
+            if (TargetX < PositionX)
+            {
+                DistanceX *= -1;
+            }
+
+            if (TargetZ < PositionZ)
+            {
+                DistanceZ *= -1;
+            }
+            
+            for (ushort h = 0; h < NumberOfMovementPackets; ++h)
+            {
+                PositionX += DistanceX;
+                PositionZ += DistanceZ;
+
+                Actions.Enqueue(new Move()
+                {
+                    IntervalTime = 1.5f,
+                    X = PositionX,
+                    Z = PositionZ
+                });
+            }
+
+            Actions.Enqueue(new Move()
+            {
+                IntervalTime = 1.5f,
+                X = TargetX,
+                Z = TargetZ
+            });
         }
 
         public enum ClientStates : byte
@@ -407,6 +503,12 @@ namespace Knight_Offline
             CharacterSelectScreen,
             LoadingGame,
             InGame
+        }
+
+        public enum BotModes : byte
+        {
+            Automatic,
+            Manual
         }
     }
 }
